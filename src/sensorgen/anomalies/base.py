@@ -50,3 +50,38 @@ def _slice(ctx: AnomalyContext, at: pd.Timestamp, duration_sec: int) -> slice:
 def _record(ctx: AnomalyContext, at: pd.Timestamp, duration_sec: int, atype: str, hint: str, params: dict) -> LabelRecord:
     end = at + pd.Timedelta(seconds=duration_sec)
     return LabelRecord(ctx.sensor_id, ctx.capability, at, end, atype, hint, dict(params))
+
+from ..emitter import Event  # noqa: E402
+
+@dataclass
+class TransportContext:
+    sensor_id: str
+    capability: str
+    start: pd.Timestamp
+    end: pd.Timestamp
+    events: list[Event]
+
+_TR_REG: dict[str, type["TransportAnomaly"]] = {}
+
+class TransportAnomaly(ABC):
+    name: str
+    detector_hint: str = "data_quality_gate"
+
+    @abstractmethod
+    def apply(self, ctx: TransportContext, *, at: pd.Timestamp, duration_sec: int, params: dict[str, Any]) -> LabelRecord: ...
+
+def register_transport(cls: type[TransportAnomaly]) -> type[TransportAnomaly]:
+    _TR_REG[cls.name] = cls
+    return cls
+
+def get_transport_anomaly(name: str) -> type[TransportAnomaly]:
+    if name not in _TR_REG:
+        raise KeyError(f"unknown transport anomaly: {name}")
+    return _TR_REG[name]
+
+def list_transport_anomalies() -> list[str]:
+    return sorted(_TR_REG)
+
+def _tr_record(ctx: TransportContext, at, duration_sec, atype, hint, params) -> LabelRecord:
+    end = at + pd.Timedelta(seconds=duration_sec)
+    return LabelRecord(ctx.sensor_id, ctx.capability, at, end, atype, hint, dict(params))
