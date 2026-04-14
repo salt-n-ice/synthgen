@@ -1,1 +1,1 @@
-from . import continuous  # noqa: F401
+from . import continuous, bursty  # noqa: F401
