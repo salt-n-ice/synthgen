@@ -17,7 +17,7 @@ def _bursts(n, rng, p_start, mean_len, idle_val, active_val, jitter):
         j = min(i + length, n)
         out[i:j] = active_val + rng.normal(0, jitter, j-i)
         i = j
-    return np.clip(out, 0, None) + rng.normal(0, jitter*0.1, n)
+    return np.clip(out, 0, None)
 
 class Fridge(Profile):
     archetype = Archetype.BURSTY
