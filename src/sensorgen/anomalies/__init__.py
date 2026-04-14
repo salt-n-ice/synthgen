@@ -1,1 +1,1 @@
-from . import point, shape, drift  # noqa: F401
+from . import point, shape, drift, pattern  # noqa: F401
