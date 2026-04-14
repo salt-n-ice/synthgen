@@ -1,1 +1,1 @@
-from . import point  # noqa: F401
+from . import point, shape  # noqa: F401
