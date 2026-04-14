@@ -25,7 +25,7 @@ def _color(t: str) -> str: return _COLORS.get(t, "rgba(120,120,120,0.2)")
 def build_figure(events: pd.DataFrame, labels: pd.DataFrame,
                  detections: pd.DataFrame | None = None) -> go.Figure:
     ev = events.copy()
-    ev["timestamp"] = pd.to_datetime(ev["timestamp"], utc=True)
+    ev["timestamp"] = pd.to_datetime(ev["timestamp"], utc=True, format="ISO8601")
     keys = list(ev.groupby(["sensor_id","capability"]).groups.keys())
     fig = make_subplots(rows=max(1,len(keys)), cols=1, shared_xaxes=True,
                         subplot_titles=[f"{s} · {c}" for s,c in keys])
