@@ -1,0 +1,40 @@
+# scenarios/outlet_demo.yaml
+seed: 1337
+start: 2026-02-01T00:00:00Z
+duration: 60d
+
+sensors:
+  - id: outlet_fridge_power
+    profile: fridge
+    capability: power
+    unit: W
+    emit: { delta_threshold: 3.0, heartbeat: 5min }
+  - id: outlet_voltage
+    profile: voltage_mains
+    capability: voltage
+    unit: V
+    emit: { delta_threshold: 0.5, heartbeat: 10min }
+
+anomalies:
+  - { type: spike,             sensor: outlet_fridge_power, at: 2026-02-05T14:00:00Z, duration: 2min,  params: { magnitude: 600 } }
+  - { type: dip,               sensor: outlet_fridge_power, at: 2026-02-07T09:00:00Z, duration: 5min,  params: { magnitude: 80 } }
+  - { type: out_of_range,      sensor: outlet_fridge_power, at: 2026-02-09T11:00:00Z, duration: 1min,  params: { value: 9999 } }
+  - { type: saturation,        sensor: outlet_fridge_power, at: 2026-02-11T15:00:00Z, duration: 10min, params: { max: 50 } }
+  - { type: noise_burst,       sensor: outlet_fridge_power, at: 2026-02-13T12:00:00Z, duration: 30min, params: { sigma: 30, seed: 11 } }
+  - { type: noise_floor_up,    sensor: outlet_voltage,      at: 2026-02-15T10:00:00Z, duration: 2h,    params: { factor: 15 } }
+  - { type: calibration_drift, sensor: outlet_voltage,      at: 2026-02-17T00:00:00Z, duration: 1d,    params: { bias: 4.0 } }
+  - { type: trend,             sensor: outlet_voltage,      at: 2026-02-19T00:00:00Z, duration: 2d,    params: { slope_per_sec: 0.00002 } }
+  - { type: level_shift,       sensor: outlet_fridge_power, at: 2026-02-21T00:00:00Z, duration: 1d,    params: { offset: 15 } }
+  - { type: frequency_change,  sensor: outlet_fridge_power, at: 2026-02-23T00:00:00Z, duration: 6h,    params: { freq_hz: 0.001, amp: 30 } }
+  - { type: seasonality_loss,  sensor: outlet_fridge_power, at: 2026-02-25T00:00:00Z, duration: 1d,    params: {} }
+  - { type: time_of_day,       sensor: outlet_fridge_power, at: 2026-02-27T00:00:00Z, duration: 3d,    params: { hour_start: 3, hour_end: 5, magnitude: 80 } }
+  - { type: weekend_anomaly,   sensor: outlet_fridge_power, at: 2026-03-02T00:00:00Z, duration: 14d,   params: { magnitude: 40, target: weekend } }
+  - { type: month_shift,       sensor: outlet_voltage,      at: 2026-03-01T00:00:00Z, duration: 30d,   params: { month: 3, offset: 2.0 } }
+  - { type: seasonal_mismatch, sensor: outlet_fridge_power, at: 2026-03-15T00:00:00Z, duration: 6h,    params: {} }
+  - { type: stuck_at,          sensor: outlet_voltage,      at: 2026-03-17T00:00:00Z, duration: 1h,    params: {} }
+  - { type: degradation_trajectory, sensor: outlet_voltage, at: 2026-03-20T00:00:00Z, duration: 10d,   params: { slope_per_sec: 1.0e-6 } }
+  - { type: dropout,           sensor: outlet_fridge_power, at: 2026-03-05T08:00:00Z, duration: 30min, params: {} }
+  - { type: duplicate_stale,   sensor: outlet_voltage,      at: 2026-03-06T08:00:00Z, duration: 1h,    params: {} }
+  - { type: reporting_rate_change, sensor: outlet_fridge_power, at: 2026-03-08T00:00:00Z, duration: 1d, params: { keep_ratio: 0.2, seed: 3 } }
+  - { type: clock_drift,       sensor: outlet_voltage,      at: 2026-03-10T00:00:00Z, duration: 6h,    params: { drift_sec_per_sec: 0.02 } }
+  - { type: batch_arrival,     sensor: outlet_fridge_power, at: 2026-03-12T00:00:00Z, duration: 1h,    params: { release_at: 2026-03-12T00:59:30Z } }

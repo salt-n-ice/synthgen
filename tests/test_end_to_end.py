@@ -47,3 +47,19 @@ def test_same_seed_byte_identical(tmp_path: Path):
     run_scenario(load_scenario(p), b)
     assert (a/"events.csv").read_bytes() == (b/"events.csv").read_bytes()
     assert (a/"labels.csv").read_bytes() == (b/"labels.csv").read_bytes()
+
+def test_outlet_demo_runs_and_covers_anomaly_types(tmp_path):
+    sc = load_scenario(Path("scenarios/outlet_demo.yaml"))
+    run_scenario(sc, tmp_path/"outlet")
+    ev = pd.read_csv(tmp_path/"outlet"/"events.csv")
+    lb = pd.read_csv(tmp_path/"outlet"/"labels.csv")
+    assert len(ev) > 1000
+    assert len(set(lb["anomaly_type"])) >= 20
+
+def test_waterleak_demo_runs_and_covers_anomaly_types(tmp_path):
+    sc = load_scenario(Path("scenarios/waterleak_demo.yaml"))
+    run_scenario(sc, tmp_path/"leak")
+    ev = pd.read_csv(tmp_path/"leak"/"events.csv")
+    lb = pd.read_csv(tmp_path/"leak"/"labels.csv")
+    assert len(ev) > 200
+    assert "water_leak_sustained" in set(lb["anomaly_type"])
