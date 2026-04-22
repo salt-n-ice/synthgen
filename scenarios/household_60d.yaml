@@ -1,0 +1,98 @@
+# scenarios/household_60d.yaml
+#
+# 60-day smart-home scenario centered on USER-BEHAVIOR anomalies.
+# Multi-sensor household: fridge, kettle, tv (BURSTY appliances), mains voltage
+# (CONTINUOUS), and basement-leak + bedroom-motion (BINARY occupancy / event sensors).
+#
+# Window: 2026-02-01 to 2026-04-02 (60 days). Bootstrap = first 14 days.
+# Anomaly mix is roughly 12 user_behavior to 3 sensor_fault. The user-facing pipeline
+# should explain the user_behavior labels via LLM ("guests visited last weekend",
+# "you've shifted to working-from-home", "you went on vacation Feb 28-Mar 6"); sensor_fault
+# labels exist for realism (sensors do break) and to test that the system treats them
+# as infrastructure (suppress downstream behavior alerts), not as user-facing reports.
+seed: 4242
+start: 2026-02-01T00:00:00Z
+duration: 60d
+
+sensors:
+  - id: outlet_fridge_power
+    profile: fridge
+    capability: power
+    unit: W
+    emit: { delta_threshold: 15.0, heartbeat: 5min }
+  - id: outlet_kettle_power
+    profile: kettle
+    capability: power
+    unit: W
+    emit: { delta_threshold: 50.0, heartbeat: 10min }
+  - id: outlet_tv_power
+    profile: tv
+    capability: power
+    unit: W
+    emit: { delta_threshold: 10.0, heartbeat: 5min }
+  - id: mains_voltage
+    profile: voltage_mains
+    capability: voltage
+    unit: V
+    emit: { delta_threshold: 3.0, heartbeat: 10min }
+  - id: basement_leak
+    profile: water_leak
+    capability: water
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 2h }
+  - id: bedroom_motion
+    profile: motion
+    capability: motion
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 30min }
+
+anomalies:
+  # === Day 16: weekend guests Feb 16-17 (one weekend day shifted into a weekday-style block) ===
+  # USER BEHAVIOR: extra TV use during the day, kettle at unusual hours, late motion.
+  - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-16T00:00:00Z, duration: 2d, params: { magnitude: 90, target: weekend } }
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-16T14:00:00Z, duration: 4h, params: { hour_start: 14, hour_end: 18, magnitude: 1500 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-02-17T01:00:00Z, duration: 30min, params: { value: 1 } }
+
+  # === Day 21-Mar 6: family transitions to WFH (sustained 14d shift) ===
+  # USER BEHAVIOR: kettle morning peak shifts later, weekday TV usage rises,
+  # fridge cycles harder (people home, fridge opened more).
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-21T10:00:00Z, duration: 14d, params: { hour_start: 10, hour_end: 12, magnitude: 1200 } }
+  - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-21T00:00:00Z, duration: 14d, params: { magnitude: 60, target: weekday } }
+  - { type: level_shift,       sensor: outlet_fridge_power, at: 2026-02-21T00:00:00Z, duration: 14d, params: { offset: 12 } }
+
+  # === Day 27: ONE infrastructure event — fridge sensor offline 45min ===
+  # SENSOR FAULT: dropout. Should be suppressed from user-facing summary.
+  - { type: dropout,           sensor: outlet_fridge_power, at: 2026-02-27T14:00:00Z, duration: 45min, params: {} }
+
+  # === Day 35-41: family vacation (Mar 7-13, one full week) ===
+  # USER BEHAVIOR: kettle / TV near zero, motion suppressed.
+  - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -800 } }
+  - { type: level_shift,       sensor: outlet_tv_power,   at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -50 } }
+  - { type: month_shift,       sensor: bedroom_motion,    at: 2026-03-07T00:00:00Z, duration: 7d, params: { month: 3, offset: 0 } }
+
+  # === Day 44: post-vacation routine reset, plus a basement leak event ===
+  # USER BEHAVIOR (water_leak_sustained is an event the user MUST be notified about).
+  - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-03-16T03:00:00Z, duration: 4h, params: {} }
+
+  # === Day 47: voltage sensor calibration drift (single sensor_fault for realism) ===
+  # SENSOR FAULT: NOT a user-facing anomaly. Should be suppressed.
+  - { type: calibration_drift, sensor: mains_voltage,     at: 2026-03-19T00:00:00Z, duration: 2d, params: { bias: 3.5 } }
+
+  # === Day 50-54: heating system kicks in, fridge cycles harder ===
+  # USER BEHAVIOR: appliance behavior shift driven by environmental change.
+  - { type: trend,             sensor: outlet_fridge_power, at: 2026-03-22T00:00:00Z, duration: 4d, params: { slope_per_sec: 2.0e-5 } }
+  - { type: frequency_change,  sensor: outlet_fridge_power, at: 2026-03-23T12:00:00Z, duration: 8h, params: { freq_hz: 0.0008, amp: 35 } }
+
+  # === Day 55-57: occupancy shift — late-night work, motion at 3am, kettle at midnight ===
+  # USER BEHAVIOR: schedule change.
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-27T03:00:00Z, duration: 1h, params: { value: 1 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-29T03:00:00Z, duration: 1h, params: { value: 1 } }
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-03-30T23:00:00Z, duration: 1h, params: { hour_start: 23, hour_end: 24, magnitude: 1500 } }
+
+  # === Day 58: one motion sensor fault — stuck_at, false occupancy ===
+  # SENSOR FAULT: should be detected as infrastructure, not behavior.
+  - { type: stuck_at,          sensor: bedroom_motion,    at: 2026-03-30T12:00:00Z, duration: 3h, params: {} }
+
+  # === Day 59: short basement leak again — recurrence is the user-facing story ===
+  # USER BEHAVIOR.
+  - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-04-01T05:00:00Z, duration: 3h, params: {} }

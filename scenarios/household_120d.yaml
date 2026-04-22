@@ -1,0 +1,114 @@
+# scenarios/household_120d.yaml
+#
+# 120-day extension of household_60d. The first 60 days mirror household_60d so
+# pre/post comparisons stay valid; the second 60 days (Apr 2 – Jun 1) add long-horizon
+# user-behavior arcs that only show up at >2-month resolution:
+#   - sustained WFH shift becoming the new normal (system should NOT keep alerting
+#     on it after ~2 weeks of consistency — tests post-shift adaptation)
+#   - month_shift on voltage from grid seasonal variation
+#   - second + third water leak events (recurrence pattern matters for user comms)
+#   - kettle replaced (visible as level_shift + frequency_change)
+#   - fridge slow degradation reaches a symptomatic phase (defrost spike)
+seed: 4243
+start: 2026-02-01T00:00:00Z
+duration: 120d
+
+sensors:
+  - id: outlet_fridge_power
+    profile: fridge
+    capability: power
+    unit: W
+    emit: { delta_threshold: 15.0, heartbeat: 5min }
+  - id: outlet_kettle_power
+    profile: kettle
+    capability: power
+    unit: W
+    emit: { delta_threshold: 50.0, heartbeat: 10min }
+  - id: outlet_tv_power
+    profile: tv
+    capability: power
+    unit: W
+    emit: { delta_threshold: 10.0, heartbeat: 5min }
+  - id: mains_voltage
+    profile: voltage_mains
+    capability: voltage
+    unit: V
+    emit: { delta_threshold: 3.0, heartbeat: 10min }
+  - id: basement_leak
+    profile: water_leak
+    capability: water
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 2h }
+  - id: bedroom_motion
+    profile: motion
+    capability: motion
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 30min }
+
+anomalies:
+  # === First 60 days: identical to household_60d.yaml for comparability ===
+  - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-16T00:00:00Z, duration: 2d, params: { magnitude: 90, target: weekend } }
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-16T14:00:00Z, duration: 4h, params: { hour_start: 14, hour_end: 18, magnitude: 1500 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-02-17T01:00:00Z, duration: 30min, params: { value: 1 } }
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-21T10:00:00Z, duration: 14d, params: { hour_start: 10, hour_end: 12, magnitude: 1200 } }
+  - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-21T00:00:00Z, duration: 14d, params: { magnitude: 60, target: weekday } }
+  - { type: level_shift,       sensor: outlet_fridge_power, at: 2026-02-21T00:00:00Z, duration: 14d, params: { offset: 12 } }
+  - { type: dropout,           sensor: outlet_fridge_power, at: 2026-02-27T14:00:00Z, duration: 45min, params: {} }
+  - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -800 } }
+  - { type: level_shift,       sensor: outlet_tv_power,   at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -50 } }
+  - { type: month_shift,       sensor: bedroom_motion,    at: 2026-03-07T00:00:00Z, duration: 7d, params: { month: 3, offset: 0 } }
+  - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-03-16T03:00:00Z, duration: 4h, params: {} }
+  - { type: calibration_drift, sensor: mains_voltage,     at: 2026-03-19T00:00:00Z, duration: 2d, params: { bias: 3.5 } }
+  - { type: trend,             sensor: outlet_fridge_power, at: 2026-03-22T00:00:00Z, duration: 4d, params: { slope_per_sec: 2.0e-5 } }
+  - { type: frequency_change,  sensor: outlet_fridge_power, at: 2026-03-23T12:00:00Z, duration: 8h, params: { freq_hz: 0.0008, amp: 35 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-27T03:00:00Z, duration: 1h, params: { value: 1 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-29T03:00:00Z, duration: 1h, params: { value: 1 } }
+  - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-03-30T23:00:00Z, duration: 1h, params: { hour_start: 23, hour_end: 24, magnitude: 1500 } }
+  - { type: stuck_at,          sensor: bedroom_motion,    at: 2026-03-30T12:00:00Z, duration: 3h, params: {} }
+  - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-04-01T05:00:00Z, duration: 3h, params: {} }
+
+  # === Apr 5 – Jun 1: long-horizon user behavior arcs ===
+
+  # === Apr 5: fridge slow degradation begins (long-horizon, 14 days). ===
+  # USER BEHAVIOR: appliance wearing out, user must be told before failure.
+  - { type: degradation_trajectory, sensor: outlet_fridge_power, at: 2026-04-05T00:00:00Z, duration: 14d, params: { slope_per_sec: 1.5e-6 } }
+
+  # === Apr 12: WFH pattern becomes the new normal (28d). System should NOT keep ===
+  # alerting on it after ~2 weeks — tests post-shift adaptation. ===
+  - { type: weekend_anomaly,   sensor: outlet_kettle_power, at: 2026-04-12T00:00:00Z, duration: 28d, params: { magnitude: 700, target: weekday } }
+
+  # === Apr 20: month_shift on voltage from grid seasonal variation ===
+  # SENSOR FAULT (or borderline). User doesn't care directly.
+  - { type: month_shift,       sensor: mains_voltage,     at: 2026-04-20T00:00:00Z, duration: 23d, params: { month: 4, offset: -1.5 } }
+
+  # === Apr 26-28: long weekend trip (lighter than full vacation) ===
+  # USER BEHAVIOR: short occupancy gap distinguishable from the sustained Mar 7-13 vacation.
+  - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-04-26T00:00:00Z, duration: 3d, params: { offset: -800 } }
+  - { type: month_shift,       sensor: bedroom_motion,    at: 2026-04-26T00:00:00Z, duration: 3d, params: { month: 4, offset: 0 } }
+
+  # === May 4: kettle hardware replaced — visible as level_shift + freq change ===
+  # USER BEHAVIOR: the user knows they replaced it; the system should detect it
+  # and surface as "your kettle behavior changed" rather than treating as extended anomaly.
+  - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-05-04T00:00:00Z, duration: 28d, params: { offset: 200 } }
+  - { type: frequency_change,  sensor: outlet_kettle_power, at: 2026-05-04T07:00:00Z, duration: 2h, params: { freq_hz: 0.0005, amp: 100 } }
+
+  # === May 9: fridge degradation reaches symptomatic phase — defrost spike ===
+  # USER BEHAVIOR: appliance is failing, user must be told.
+  - { type: spike,             sensor: outlet_fridge_power, at: 2026-05-09T03:30:00Z, duration: 5min, params: { magnitude: 450 } }
+  - { type: trend,             sensor: outlet_fridge_power, at: 2026-05-09T03:35:00Z, duration: 7d, params: { slope_per_sec: 4.0e-5 } }
+
+  # === May 17-19: heat-wave bump on fridge (same pattern as Mar 22, but stronger) ===
+  - { type: trend,             sensor: outlet_fridge_power, at: 2026-05-17T00:00:00Z, duration: 3d, params: { slope_per_sec: 5.0e-5 } }
+  - { type: frequency_change,  sensor: outlet_fridge_power, at: 2026-05-18T12:00:00Z, duration: 6h, params: { freq_hz: 0.0012, amp: 45 } }
+
+  # === May 21: third basement leak (recurrence pattern matters for user comms) ===
+  - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-05-21T08:00:00Z, duration: 6h, params: {} }
+
+  # === May 24-26: late-night occupancy cluster (3 nights) — sleep schedule change ===
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-24T03:30:00Z, duration: 1h, params: { value: 1 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-25T03:30:00Z, duration: 1h, params: { value: 1 } }
+  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-26T03:30:00Z, duration: 1h, params: { value: 1 } }
+
+  # === May 28: sensor fault — kettle outlet sensor reporting at slow rate ===
+  # SENSOR FAULT: report-rate degradation.
+  - { type: reporting_rate_change, sensor: outlet_kettle_power, at: 2026-05-28T00:00:00Z, duration: 1d, params: { keep_ratio: 0.25, seed: 9 } }

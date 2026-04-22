@@ -1,0 +1,54 @@
+# scenarios/leak_30d.yaml
+#
+# 30-day water-leak focus scenario. Tests two user_behavior facets that the
+# household_*.yaml scenarios under-cover: (1) recurring intermittent leaks (vs
+# one-off events) and (2) co-occurring environmental signals (basement temp drop
+# during a leak from cold water on the floor sensor).
+#
+# Purposeful absence: NO power appliance sensors. The system here is purely
+# environmental + occupancy-adjacent. This forces the LLM-explain pipeline to
+# differentiate "leak event" narratives from "appliance behavior" narratives.
+seed: 9001
+start: 2026-02-01T00:00:00Z
+duration: 30d
+
+sensors:
+  - id: basement_leak
+    profile: water_leak
+    capability: water
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 2h }
+  - id: basement_temp
+    profile: room_temperature
+    capability: temperature
+    unit: C
+    emit: { delta_threshold: 0.4, heartbeat: 10min }
+  - id: utility_motion
+    profile: motion
+    capability: motion
+    unit: bool
+    emit: { delta_threshold: 1.0, heartbeat: 30min }
+
+anomalies:
+  # === Day 16: first leak event — a single short leak, the household notices. ===
+  # USER BEHAVIOR.
+  - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-16T03:00:00Z, duration: 90min, params: {} }
+  - { type: dip,                  sensor: basement_temp, at: 2026-02-16T03:00:00Z, duration: 4h, params: { magnitude: 2.5 } }
+
+  # === Day 17: utility-room visits to investigate (motion at unusual times). ===
+  - { type: unusual_occupancy,    sensor: utility_motion, at: 2026-02-17T22:30:00Z, duration: 45min, params: { value: 1 } }
+  - { type: unusual_occupancy,    sensor: utility_motion, at: 2026-02-18T05:00:00Z, duration: 30min, params: { value: 1 } }
+
+  # === Day 22-23: leak recurs intermittently — the recurrence is the user-facing story. ===
+  - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-22T11:00:00Z, duration: 2h, params: {} }
+  - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-23T08:30:00Z, duration: 1h, params: {} }
+  - { type: dip,                  sensor: basement_temp, at: 2026-02-22T11:00:00Z, duration: 3h, params: { magnitude: 1.8 } }
+
+  # === Day 25: temp sensor calibration drift (sensor fault, easy to confuse with ===
+  # === a real cold spell — tests the system's ability to suppress this from user comms). ===
+  # SENSOR FAULT.
+  - { type: calibration_drift,    sensor: basement_temp, at: 2026-02-25T00:00:00Z, duration: 2d, params: { bias: -1.5 } }
+
+  # === Day 27-28: longest leak yet (overnight, while occupants asleep). ===
+  - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-27T02:00:00Z, duration: 5h, params: {} }
+  - { type: dip,                  sensor: basement_temp, at: 2026-02-27T02:00:00Z, duration: 6h, params: { magnitude: 3.5 } }
