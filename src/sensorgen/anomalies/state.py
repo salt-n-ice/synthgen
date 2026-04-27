@@ -30,16 +30,3 @@ class WaterLeakSustained(Anomaly):
         ctx.signal[s] = 1
         return _record(ctx, at, duration_sec, self.name, self.detector_hint, params)
 
-@register
-class UnusualOccupancy(Anomaly):
-    name = "unusual_occupancy"
-    supports = {Archetype.BINARY, Archetype.BURSTY}
-    detector_hint = "temporal_profiles"
-    def apply(self, ctx, *, at, duration_sec, params):
-        s = _slice(ctx, at, duration_sec)
-        v = params.get("value", 1)
-        if ctx.archetype == Archetype.BINARY:
-            ctx.signal[s] = int(v)
-        else:
-            ctx.signal[s] = float(v)
-        return _record(ctx, at, duration_sec, self.name, self.detector_hint, params)

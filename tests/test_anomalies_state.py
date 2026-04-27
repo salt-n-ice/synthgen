@@ -22,11 +22,3 @@ def test_water_leak_sustained_sets_wet_for_duration():
     assert ctx.signal[0] == 0 and ctx.signal[-1] == 0
     assert rec.anomaly_type == "water_leak_sustained"
 
-def test_unusual_occupancy_sets_binary_on():
-    sig = np.zeros(86400, dtype=np.uint8)
-    ctx = AnomalyContext("s1","motion","",Archetype.BINARY,
-                         pd.Timestamp("2026-03-01T00:00:00Z"), sig.copy())
-    get_anomaly("unusual_occupancy")().apply(ctx,
-        at=pd.Timestamp("2026-03-01T03:00:00Z"), duration_sec=600,
-        params={"value": 1})
-    assert (ctx.signal[3*3600:3*3600+600] == 1).all()

@@ -23,21 +23,12 @@ sensors:
     capability: temperature
     unit: C
     emit: { delta_threshold: 0.4, heartbeat: 10min }
-  - id: utility_motion
-    profile: motion
-    capability: motion
-    unit: bool
-    emit: { delta_threshold: 1.0, heartbeat: 30min }
 
 anomalies:
   # === Day 16: first leak event — a single short leak, the household notices. ===
   # USER BEHAVIOR.
   - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-16T03:00:00Z, duration: 90min, params: {} }
   - { type: dip,                  sensor: basement_temp, at: 2026-02-16T03:00:00Z, duration: 4h, params: { magnitude: 2.5 } }
-
-  # === Day 17: utility-room visits to investigate (motion at unusual times). ===
-  - { type: unusual_occupancy,    sensor: utility_motion, at: 2026-02-17T22:30:00Z, duration: 45min, params: { value: 1 } }
-  - { type: unusual_occupancy,    sensor: utility_motion, at: 2026-02-18T05:00:00Z, duration: 30min, params: { value: 1 } }
 
   # === Day 22-23: leak recurs intermittently — the recurrence is the user-facing story. ===
   - { type: water_leak_sustained, sensor: basement_leak, at: 2026-02-22T11:00:00Z, duration: 2h, params: {} }

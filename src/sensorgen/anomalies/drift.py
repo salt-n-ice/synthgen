@@ -13,9 +13,9 @@ class CalibrationDrift(Anomaly):
     supports = NUMERIC
     detector_hint = "cusum"
     def apply(self, ctx, *, at, duration_sec, params):
-        i0 = max(0, _idx(ctx, at))
+        s = _slice(ctx, at, duration_sec)
         bias = float(params["bias"])
-        ctx.signal[i0:] = ctx.signal[i0:] + bias
+        ctx.signal[s] = ctx.signal[s] + bias
         return _record(ctx, at, duration_sec, self.name, self.detector_hint, params)
 
 @register
@@ -36,9 +36,9 @@ class LevelShift(Anomaly):
     supports = NUMERIC
     detector_hint = "cusum_pca"
     def apply(self, ctx, *, at, duration_sec, params):
-        i0 = max(0, _idx(ctx, at))
+        s = _slice(ctx, at, duration_sec)
         off = float(params["offset"])
-        ctx.signal[i0:] = ctx.signal[i0:] + off
+        ctx.signal[s] = ctx.signal[s] + off
         return _record(ctx, at, duration_sec, self.name, self.detector_hint, params)
 
 @register

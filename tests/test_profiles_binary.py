@@ -17,8 +17,3 @@ def test_light_switch_has_multiple_transitions_per_day():
     transitions = np.sum(np.abs(np.diff(sig.astype(int))))
     assert transitions >= 4
 
-def test_motion_is_sparse_and_binary():
-    prof = get_profile("motion")
-    sig = prof.sample(pd.Timestamp("2026-03-01T00:00:00Z"), TICKS_PER_DAY, np.random.default_rng(0))
-    assert set(np.unique(sig)).issubset({0, 1})
-    assert 0.0 < sig.mean() < 0.2

@@ -39,32 +39,22 @@ sensors:
     capability: water
     unit: bool
     emit: { delta_threshold: 1.0, heartbeat: 2h }
-  - id: bedroom_motion
-    profile: motion
-    capability: motion
-    unit: bool
-    emit: { delta_threshold: 1.0, heartbeat: 30min }
 
 anomalies:
   # === First 60 days: identical to household_60d.yaml for comparability ===
   - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-16T00:00:00Z, duration: 2d, params: { magnitude: 90, target: weekend } }
   - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-16T14:00:00Z, duration: 4h, params: { hour_start: 14, hour_end: 18, magnitude: 1500 } }
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-02-17T01:00:00Z, duration: 30min, params: { value: 1 } }
   - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-02-21T10:00:00Z, duration: 14d, params: { hour_start: 10, hour_end: 12, magnitude: 1200 } }
   - { type: weekend_anomaly,   sensor: outlet_tv_power,   at: 2026-02-21T00:00:00Z, duration: 14d, params: { magnitude: 60, target: weekday } }
   - { type: level_shift,       sensor: outlet_fridge_power, at: 2026-02-21T00:00:00Z, duration: 14d, params: { offset: 12 } }
   - { type: dropout,           sensor: outlet_fridge_power, at: 2026-02-27T14:00:00Z, duration: 45min, params: {} }
   - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -800 } }
   - { type: level_shift,       sensor: outlet_tv_power,   at: 2026-03-07T00:00:00Z, duration: 7d, params: { offset: -50 } }
-  - { type: month_shift,       sensor: bedroom_motion,    at: 2026-03-07T00:00:00Z, duration: 7d, params: { month: 3, offset: 0 } }
   - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-03-16T03:00:00Z, duration: 4h, params: {} }
   - { type: calibration_drift, sensor: mains_voltage,     at: 2026-03-19T00:00:00Z, duration: 2d, params: { bias: 3.5 } }
   - { type: trend,             sensor: outlet_fridge_power, at: 2026-03-22T00:00:00Z, duration: 4d, params: { slope_per_sec: 2.0e-5 } }
   - { type: frequency_change,  sensor: outlet_fridge_power, at: 2026-03-23T12:00:00Z, duration: 8h, params: { freq_hz: 0.0008, amp: 35 } }
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-27T03:00:00Z, duration: 1h, params: { value: 1 } }
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-03-29T03:00:00Z, duration: 1h, params: { value: 1 } }
   - { type: time_of_day,       sensor: outlet_kettle_power, at: 2026-03-30T23:00:00Z, duration: 1h, params: { hour_start: 23, hour_end: 24, magnitude: 1500 } }
-  - { type: stuck_at,          sensor: bedroom_motion,    at: 2026-03-30T12:00:00Z, duration: 3h, params: {} }
   - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-04-01T05:00:00Z, duration: 3h, params: {} }
 
   # === Apr 5 – Jun 1: long-horizon user behavior arcs ===
@@ -84,7 +74,6 @@ anomalies:
   # === Apr 26-28: long weekend trip (lighter than full vacation) ===
   # USER BEHAVIOR: short occupancy gap distinguishable from the sustained Mar 7-13 vacation.
   - { type: level_shift,       sensor: outlet_kettle_power, at: 2026-04-26T00:00:00Z, duration: 3d, params: { offset: -800 } }
-  - { type: month_shift,       sensor: bedroom_motion,    at: 2026-04-26T00:00:00Z, duration: 3d, params: { month: 4, offset: 0 } }
 
   # === May 4: kettle hardware replaced — visible as level_shift + freq change ===
   # USER BEHAVIOR: the user knows they replaced it; the system should detect it
@@ -103,11 +92,6 @@ anomalies:
 
   # === May 21: third basement leak (recurrence pattern matters for user comms) ===
   - { type: water_leak_sustained, sensor: basement_leak,  at: 2026-05-21T08:00:00Z, duration: 6h, params: {} }
-
-  # === May 24-26: late-night occupancy cluster (3 nights) — sleep schedule change ===
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-24T03:30:00Z, duration: 1h, params: { value: 1 } }
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-25T03:30:00Z, duration: 1h, params: { value: 1 } }
-  - { type: unusual_occupancy, sensor: bedroom_motion,    at: 2026-05-26T03:30:00Z, duration: 1h, params: { value: 1 } }
 
   # === May 28: sensor fault — kettle outlet sensor reporting at slow rate ===
   # SENSOR FAULT: report-rate degradation.
