@@ -16,7 +16,7 @@ USER_BEHAVIOR_TYPES: frozenset[str] = frozenset({
     "spike", "dip", "level_shift", "trend", "degradation_trajectory",
     "frequency_change", "seasonality_loss", "time_of_day",
     "weekend_anomaly", "month_shift", "seasonal_mismatch",
-    "water_leak_sustained", "unusual_occupancy",
+    "water_leak_sustained",
 })
 SENSOR_FAULT_TYPES: frozenset[str] = frozenset({
     "out_of_range", "saturation", "noise_burst", "noise_floor_up",

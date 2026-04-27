@@ -34,13 +34,4 @@ class LightSwitch(Profile):
         base[(tod > 1) & (tod < 6)] = 0
         return base
 
-class Motion(Profile):
-    archetype = Archetype.BINARY
-    name = "motion"
-    def sample(self, start, n_ticks, rng):
-        tod = _time_of_day_fraction(start, n_ticks) * 24
-        base = _alternating(n_ticks, rng, p_on_per_sec=1.0/(30*60), mean_on_dur=30)
-        base[(tod > 1) & (tod < 6)] = 0
-        return base
-
-register(WaterLeak()); register(LightSwitch()); register(Motion())
+register(WaterLeak()); register(LightSwitch())

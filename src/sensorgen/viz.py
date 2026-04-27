@@ -15,7 +15,7 @@ _COLORS = {
     "seasonality_loss":"rgba(120,120,120,0.25)", "time_of_day":"rgba(255,200,0,0.25)",
     "weekend_anomaly":"rgba(0,200,255,0.25)", "month_shift":"rgba(180,160,80,0.25)",
     "seasonal_mismatch":"rgba(200,100,200,0.25)", "stuck_at":"rgba(80,80,80,0.25)",
-    "water_leak_sustained":"rgba(0,120,255,0.35)", "unusual_occupancy":"rgba(220,120,60,0.25)",
+    "water_leak_sustained":"rgba(0,120,255,0.35)",
     "dropout":"rgba(160,40,40,0.25)", "duplicate_stale":"rgba(80,160,160,0.25)",
     "reporting_rate_change":"rgba(150,150,30,0.25)", "clock_drift":"rgba(100,50,160,0.25)",
     "batch_arrival":"rgba(200,80,40,0.25)", "saturation":"rgba(240,100,100,0.25)",
