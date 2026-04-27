@@ -11,6 +11,7 @@ from .anomalies.base import (
     list_anomalies, list_transport_anomalies,
 )
 from .labels import write_labels
+from .auto_labels import compute_usage_anomaly_labels
 
 def run_scenario(sc: Scenario, out_dir: Path) -> None:
     out_dir = Path(out_dir)
@@ -21,9 +22,11 @@ def run_scenario(sc: Scenario, out_dir: Path) -> None:
 
     all_events = []
     all_labels = []
+    sensor_archetypes: dict[tuple[str, str], object] = {}
 
     for sensor in sc.sensors:
         prof = get_profile(sensor.profile)
+        sensor_archetypes[(sensor.id, sensor.capability)] = prof.archetype
         rng_sig = root.child(f"profile:{sensor.id}")
         signal = prof.sample(sc.start, sc.duration_sec, rng_sig)
         ctx_sig = AnomalyContext(sensor.id, sensor.capability, sensor.unit,
@@ -51,5 +54,12 @@ def run_scenario(sc: Scenario, out_dir: Path) -> None:
         all_events.extend(ctx_tr.events)
 
     all_events.sort(key=lambda e: (e.timestamp, e.sensor_id, e.capability))
+    # Auto-label natural-variation outlier days (BURSTY sensors only).
+    # Runs after all signal/transport anomalies are applied so the
+    # baseline is computed on the same event stream the detector sees,
+    # and so user-labelled windows are correctly excluded from the
+    # outlier baseline.
+    all_labels.extend(compute_usage_anomaly_labels(
+        all_events, all_labels, sensor_archetypes))
     events_to_dataframe(all_events).to_csv(out_dir/"events.csv", index=False)
     write_labels(all_labels, out_dir/"labels.csv")

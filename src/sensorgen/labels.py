@@ -17,6 +17,15 @@ USER_BEHAVIOR_TYPES: frozenset[str] = frozenset({
     "frequency_change", "seasonality_loss", "time_of_day",
     "weekend_anomaly", "month_shift", "seasonal_mismatch",
     "water_leak_sustained",
+    # Auto-emitted by the natural-variation outlier detector
+    # (post-generation pass over BURSTY sensor signals): days where
+    # the simulator's stochastic background produced unusually
+    # heavy/light usage relative to the long-term baseline. Without
+    # these labels the detector correctly fires on real signal
+    # deviations but the eval scores them as FPs because the YAML
+    # author didn't intend them. Labelled here as a structural
+    # honesty fix for evt_F1 / fpur / uvfp/d.
+    "usage_anomaly",
 })
 SENSOR_FAULT_TYPES: frozenset[str] = frozenset({
     "out_of_range", "saturation", "noise_burst", "noise_floor_up",
